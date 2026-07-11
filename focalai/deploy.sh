@@ -117,12 +117,19 @@ else
 fi
 
 # Public permission for Function URL (idempotent).
+# Some fresh AWS accounts reject anonymous URL requests unless
+# lambda:InvokeFunction is also allowed, in addition to lambda:InvokeFunctionUrl.
 aws lambda add-permission \
   --function-name "$FN_NAME" \
   --statement-id FunctionURLAllowPublic \
   --action lambda:InvokeFunctionUrl \
   --principal '*' \
   --function-url-auth-type NONE >/dev/null 2>&1 || true
+aws lambda add-permission \
+  --function-name "$FN_NAME" \
+  --statement-id FunctionInvokeAllowPublic \
+  --action lambda:InvokeFunction \
+  --principal '*' >/dev/null 2>&1 || true
 
 echo ""
 echo "=================================================="

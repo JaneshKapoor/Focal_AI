@@ -16,6 +16,11 @@ import time
 import zipfile
 from pathlib import Path
 
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 HERE = Path(__file__).resolve().parent
 
 
@@ -206,20 +211,26 @@ except ClientError as e:
     url = url_cfg["FunctionUrl"]
     print("→ function URL created")
 
-try:
-    lam.add_permission(
-        FunctionName=FN_NAME,
-        StatementId="FunctionURLAllowPublic",
-        Action="lambda:InvokeFunctionUrl",
-        Principal="*",
-        FunctionUrlAuthType="NONE",
-    )
-    print("✓ public invoke permission added")
-except ClientError as e:
-    if e.response["Error"]["Code"] == "ResourceConflictException":
-        print("✓ public invoke permission already present")
-    else:
-        raise
+for sid, kwargs in [
+    (
+        "FunctionURLAllowPublic",
+        {"Action": "lambda:InvokeFunctionUrl", "FunctionUrlAuthType": "NONE"},
+    ),
+    # Some AWS accounts (observed on fresh accounts) reject anonymous requests
+    # unless lambda:InvokeFunction is also allowed on the resource policy,
+    # even though the docs say InvokeFunctionUrl alone is sufficient.
+    ("FunctionInvokeAllowPublic", {"Action": "lambda:InvokeFunction"}),
+]:
+    try:
+        lam.add_permission(
+            FunctionName=FN_NAME, StatementId=sid, Principal="*", **kwargs
+        )
+        print(f"✓ {sid} added")
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "ResourceConflictException":
+            print(f"✓ {sid} already present")
+        else:
+            raise
 
 print()
 print("=" * 60)

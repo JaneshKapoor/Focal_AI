@@ -61,13 +61,23 @@ curl -sS -X POST "$URL" \
 
 ## Live URL
 
-_Filled in by `deploy.sh` after a successful deployment — see the top of this
-file after your first run, or check the deployment log._
+**https://zxci5naldqxn66iiywu53bofga0wpthf.lambda-url.us-east-1.on.aws/**
+
+Open it in a browser to use the app, or:
+
+```bash
+curl -sS https://zxci5naldqxn66iiywu53bofga0wpthf.lambda-url.us-east-1.on.aws/ | head
+curl -sS -X POST https://zxci5naldqxn66iiywu53bofga0wpthf.lambda-url.us-east-1.on.aws/ \
+  -H "Content-Type: application/json" \
+  -d '{"tasks":"Ship the demo\nBook a haircut\nReply to organizer"}'
+```
 
 ## AWS resources this creates
 
-- Lambda function: `focalai-task-prioritizer`
+- Lambda function: `focalai-task-prioritizer` (region `us-east-1`, python 3.12, 25s timeout, 512 MB)
 - IAM role: `focalai-task-prioritizer-role`
-- Inline policy on the role: `focalai-task-prioritizer-bedrock-invoke`
-- Function URL config on the Lambda (auth `NONE`)
+  - Attached: `AWSLambdaBasicExecutionRole` (AWS-managed)
+  - Inline policy: `focalai-task-prioritizer-bedrock-invoke` → `bedrock:InvokeModel` on `arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-lite-v1:0`
+- Function URL config on the Lambda (auth `NONE`, CORS `*`)
+- Two statements on the function's resource-based policy: `FunctionURLAllowPublic` and `FunctionInvokeAllowPublic` (both `Principal:*`)
 - CloudWatch log group `/aws/lambda/focalai-task-prioritizer` (auto-created on first invoke)
