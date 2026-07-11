@@ -25,22 +25,30 @@ Browser ──── HTTPS ───▶│  Lambda Function URL        │
 ## Files
 
 - `lambda_function.py` — GET returns the embedded SPA; POST calls Bedrock and returns `{"ranked":[{task, priority, reason}, ...]}`.
-- `deploy.sh` — idempotent bash deploy (role + policy + zip + function + Function URL).
+- `deploy.py` — idempotent boto3 deploy (no AWS CLI required).
+- `deploy.sh` — idempotent bash deploy (uses AWS CLI). Same behaviour as `deploy.py`.
 - `.env.example` — the env vars the deploy expects. Copy to `.env` and fill in.
 
 ## Deploy
 
-Prerequisites: AWS CLI installed and Bedrock **model access for
-`amazon.nova-lite-v1:0` enabled in `us-east-1`** (Console → Bedrock → Model access — one-time).
+Prerequisites: Bedrock **model access for `amazon.nova-lite-v1:0` enabled in
+`us-east-1`** (Console → Bedrock → Model access — one-time).
+
+Copy `.env.example` → `.env` and fill in your AWS keys, then pick one:
 
 ```bash
-cp .env.example .env         # fill in AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY
+# Option A: Python + boto3 (no AWS CLI required)
+cd focalai
+pip install boto3
+python deploy.py
+
+# Option B: bash + AWS CLI
 cd focalai
 bash deploy.sh
 ```
 
-`deploy.sh` is safe to re-run: it creates the IAM role and Function URL on the
-first run and updates the function code on every subsequent run.
+Both scripts are idempotent — safe to re-run. They create the IAM role and
+Function URL on the first run and update the function code on every run after.
 
 ## Test
 
